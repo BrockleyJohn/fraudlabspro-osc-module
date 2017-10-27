@@ -1,0 +1,192 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>FraudLabs Credit Card Fraud Prevention: Installation Guide</title>
+<style type="text/css">
+body,td{
+	font-family:Arial,Tahoma,Verdana;
+	font-size:12px;
+}
+
+.header{
+	width:100%;
+	background:#FC6859;
+	color:#FFFFFF;
+	font-weight:bold;
+	padding:2px 2px 2px 4px;
+}
+
+textarea{
+	border:solid 1px #000066;
+	width:100%;
+	height:80px;
+}
+</style>
+</head>
+<body>
+<h1>FraudLabs Pro&trade; Credit Card Fraud Prevention v1.3.2</h1>
+<h3>Overview</h3>
+<p>FraudLabs Pro&trade; Credit Card Fraud Prevention v1.3.2 screens credit card transactions for online frauds. It increases e-commerce merchant profits by reduces chargeback, improves operation efficiency and provides business intelligence. Merchants can investigate all complex, high-risk orders in a simple way by using merchant administrative interface.</p>
+<p>You can sign up a free account at <a href="http://www.fraudlabspro.com/sign-up?r=oscommerce" target="_blank">http://www.fraudlabspro.com/sign-up</a> to start using this awesome feature.</p>
+<img src="images/screen01.jpg" border="1" align="bottom" alt="">
+<p>&nbsp;</p>
+<h3>Installation</h3>
+In this installation,
+<ol>
+	<li>There are 3 files to be added.
+	<br>
+	catalog/admin/includes/modules/fraudlabs_pro/summary.php
+	<br>
+	catalog/admin/includes/modules/fraudlabs_pro/feedback.php
+	<br>
+	catalog/includes/modules/fraudlabs_pro/process_order.php<br><br>
+	<li>There are 2 files to be modified.
+	<br>
+	catalog/checkout_process.php<br>
+	catalog/admin/orders.php<br>
+</ol>
+<div style="margin:10px;">
+	<em>Please take note that the "server" in this tutorial means the location where you install the osCommerce.</em><br/>
+	<em>This solution has been successfully tested on osCommerce 2.3.3</em><br/>
+	<em>IMPORTANT: Please BACKUP the osCommerce source files in your server before proceed with the below upgrade!</em>
+</div>
+<div class="header">Step 1: Get a free FraudLabs Pro license key</div>
+<ol>
+	<li>First of all, you need a FraudLabs Pro license key. You can register a free license key at <a href="http://www.fraudlabspro.com/sign-up" target="_blank">http://www.fraudlabspro.com/sign-up</a> if you do not have one.
+</ol>
+<div class="header">Step 2: Edit license key and upload the files</div>
+<ol>
+	<li>Unzip the package.</li>
+	<li>Upload catalog/includeds/modules/fraudlabs_pro/process_order.php into server</li>
+	<li>Upload catalog/admin/includeds/modules/fraudlabs_pro/summary.php into server</li>
+	<li>Upload catalog/admin/includes/modules/fraudlabs_pro/feedback.php into server</li>
+	<li>
+		Open catalog/includeds/modules/fraudlabs_pro/process_order.php (the server copy) with text editor, search for the below code and replace <strong>YOUR_LICENSE_KEY_HERE</strong> with your license key.<br>
+		<p style="padding:5px; margin:5px; border:1px solid #ccc;"><code>$flpData['key'] = 'YOUR_LICENSE_KEY_HERE';<code></p>
+	</li>
+</ol>
+<div style="margin:10px;">
+	<em>Please take note that we suppose the osCommerce folder shall have the same structure as our package files. However, if the server folder doesn't start with catalog parent folder, please omit the catalog parent and upload the files accordingly.</em>
+</div>
+<div class="header">Step 3: Edit checkout_process.php (server)</div>
+<ol>
+	<li>Open catalog/checkout_process.php with a text editor.</li>
+	<li>
+		Search for:<br>
+		<textarea onclick="this.select();">  $insert_id = tep_db_insert_id();</textarea>
+	</li>
+	<li>Replace with:<br>
+		<textarea onclick="this.select();">  $insert_id = tep_db_insert_id();
+
+		include(DIR_WS_MODULES . '/fraudlabs_pro/process_order.php');</textarea><br><br>
+	</li>
+</ol>
+<div class="header">Step 4: Edit orders.php (server)</div>
+<ol>
+	<li>Open catalog/admin/orders.php with a text editor.</li>
+	<li>
+		Search for:<br>
+		<textarea onclick="this.select();">  $action = (isset($HTTP_GET_VARS['action']) ? $HTTP_GET_VARS['action'] : '');</textarea>
+	</li>
+	<li>
+		Replace with:<br>
+		<textarea onclick="this.select();">  $action = (isset($HTTP_GET_VARS['action']) ? $HTTP_GET_VARS['action'] : '');
+
+		include(DIR_WS_MODULES . 'fraudlabs_pro/feedback.php');</textarea><br><br>
+	</li>
+	<li>
+		Search for:<br>
+		<textarea>        tep_remove_order($oID, $HTTP_POST_VARS['restock']);</textarea>
+	</li>
+	<li>
+		Replace with:<br>
+		<textarea onclick="this.select();">        tep_remove_order($oID, $HTTP_POST_VARS['restock']);
+		tep_db_query("delete from fraudlabs_pro where order_id='". $oID ."'");</textarea><br><br>
+	</li>
+	<li>
+		Search for:<br>
+		<textarea>      <tr>
+		<td class="main"><br /><strong><?php echo TABLE_HEADING_COMMENTS; ?></strong></td>
+		</tr></textarea>
+	</li>
+	<li>
+		Replace with:<br>
+		<textarea onclick="this.select();">	  <tr>
+			<td><?php include(DIR_WS_MODULES . 'fraudlabs_pro/summary.php'); ?><td>
+		</tr>
+		<tr>
+			<td class="main"><br><b><?php echo TABLE_HEADING_COMMENTS; ?></b></td>
+		</tr></textarea><br><br>
+	</li>
+</ol>
+<div class="header">Step 5: Create FraudLabs Pro table in osCommerce database</div>
+<ol>
+	<li>
+		Create a fraudlabs table in osCommerce database using the below SQL query.<br>
+		<textarea onclick="this.select();" style="height:500px;">CREATE TABLE `fraudlabs_pro` (
+	`flp_id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`api_key` CHAR(32) NULL DEFAULT NULL,
+	`is_country_match` CHAR(2) NULL DEFAULT NULL,
+	`is_high_risk_country` CHAR(2) NULL DEFAULT NULL,
+	`distance_in_km` INT(10) NULL DEFAULT NULL,
+	`distance_in_mile` INT(10) NULL DEFAULT NULL,
+	`ip_address` VARCHAR(15) NULL DEFAULT NULL,
+	`ip_country` CHAR(2) NULL DEFAULT NULL,
+	`ip_continent` VARCHAR(10) NULL DEFAULT NULL,
+	`ip_region` VARCHAR(50) NULL DEFAULT NULL,
+	`ip_city` VARCHAR(50) NULL DEFAULT NULL,
+	`ip_latitude` DECIMAL(14,6) NULL DEFAULT '0.000000',
+	`ip_longitude` DECIMAL(14,6) NULL DEFAULT '0.000000',
+	`ip_timezone` VARCHAR(6) NULL DEFAULT NULL,
+	`ip_elevation` INT(10) NULL DEFAULT NULL,
+	`ip_domain` VARCHAR(100) NULL DEFAULT NULL,
+	`ip_mobile_mnc` VARCHAR(50) NULL DEFAULT NULL,
+	`ip_mobile_mcc` CHAR(2) NULL DEFAULT NULL,
+	`ip_mobile_brand` VARCHAR(50) NULL DEFAULT NULL,
+	`ip_netspeed` VARCHAR(10) NULL DEFAULT NULL,
+	`ip_isp_name` VARCHAR(50) NULL DEFAULT NULL,
+	`ip_usage_type` VARCHAR(50) NULL DEFAULT NULL,
+	`is_free_email` VARCHAR(2) NULL DEFAULT NULL,
+	`is_new_domain_name` VARCHAR(2) NULL DEFAULT NULL,
+	`is_proxy_ip_address` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bin_found` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bin_country_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bin_name_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bin_phone_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bin_prepaid` VARCHAR(2) NULL DEFAULT NULL,
+	`is_address_ship_forward` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bill_ship_city_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bill_ship_state_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bill_ship_country_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_bill_ship_postal_match` VARCHAR(2) NULL DEFAULT NULL,
+	`is_ip_blacklist` VARCHAR(2) NULL DEFAULT NULL,
+	`is_email_blacklist` VARCHAR(2) NULL DEFAULT NULL,
+	`is_credit_card_blacklist` VARCHAR(2) NULL DEFAULT NULL,
+	`is_device_blacklist` VARCHAR(2) NULL DEFAULT NULL,
+	`is_user_blacklist` VARCHAR(2) NULL DEFAULT NULL,
+	`user_order_id` INT(10) NULL DEFAULT NULL,
+	`user_order_memo` VARCHAR(100) NULL DEFAULT NULL,
+	`fraudlabspro_score` INT(10) NULL DEFAULT '0',
+	`fraudlabspro_distribution` INT(10) NULL DEFAULT '0',
+	`fraudlabspro_status` VARCHAR(10) NULL DEFAULT NULL,
+	`fraudlabspro_id` VARCHAR(15) NULL DEFAULT NULL,
+	`fraudlabspro_version` VARCHAR(5) NULL DEFAULT NULL,
+	`fraudlabspro_error_code` VARCHAR(3) NULL DEFAULT NULL,
+	`fraudlabspro_message` VARCHAR(50) NULL DEFAULT NULL,
+	`fraudlabspro_credits` VARCHAR(10) NULL DEFAULT NULL,
+	`order_id` INT(11) NOT NULL,
+	PRIMARY KEY (`flp_id`),
+	INDEX `idx_order_id` (`order_id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=MyISAM;</textarea><br><br>
+	</li>
+</ol>
+<div class="header">Step 6: Done</div>
+<ol>
+	<li>You have successfully completed the installation process.</li>
+	<li>What's next!? You can start customizing your fraud checking rules at <a hre="http://www.fraudlabspro.com" target="_blank">http://www.fraudlabspro.com</a> and start protecting your business from unwanted fraud attempts.</li>
+</ol>
+<div style="margin-top:50px;">Copyright&copy; 2017 <a href="http://www.fraudlabspro.com">FraudLabs Pro</a>. All Rights Reserved.</div>
+</body>
+</html>
