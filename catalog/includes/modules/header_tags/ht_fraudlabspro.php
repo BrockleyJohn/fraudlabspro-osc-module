@@ -35,7 +35,7 @@
 // insert flabs agent script and add ajax submit to confirmation 
         $text = <<<EOT
 <form id="ajax_form">
-  <input name="action" type="hidden" value="fraudlabspro">
+  <input name="action" type="hidden" value="record_confirm">
 </form>
 <script type="text/javascript">
   (function(){
@@ -51,7 +51,9 @@
 	})();
 
   $(document).ready(function() {
-    $("form[name='checkout_confirmation']").on('submit', function(e){
+    $("form[name='checkout_confirmation']").one('submit', function(e){
+
+	    e.preventDefault();
 
 		var params = $('#ajax_form').serializeArray();
 		$.ajax({
@@ -63,24 +65,24 @@
 			url: "sew_ajax.php",
 			data: params,
 			success: function(data) {
-			/*	$("#indic").removeClass('loadingActive');
-				var dataObj = $.parseJSON(data);
-				$("#result").empty();
-				$("#result").append(dataObj.msg);
-				if (dataObj.status != 'OK') {
-					$("#indic").addClass('failed');
-				} else {
-				  $("#indic").addClass('success');
-				} */
+				$("form[name='checkout_confirmation']").submit();
+			//	$("#indic").removeClass('loadingActive');
+			//	var dataObj = $.parseJSON(data);
+			//	$("#result").empty();
+			//	$("#result").append(dataObj.msg);
+			//	if (dataObj.status != 'OK') {
+			//		$("#indic").addClass('failed');
+			//	} else {
+			//	  $("#indic").addClass('success');
+			//	} 
 			},
 			error: function(data) {
-			/*	$("#result").empty();
-				$("#result").append(data);
-				$("#indic").removeClass('loadingActive');
-				$("#indic").addClass('failed'); */
+			//	$("#result").empty();
+			//	$("#result").append(data);
+			//	$("#indic").removeClass('loadingActive');
+			//	$("#indic").addClass('failed'); 
 			}
 		});
-	    e.preventDefault();
 	});  
   });  
 </script>
@@ -173,6 +175,30 @@ EOT;
                 `order_id` INT(11) NOT NULL DEFAULT \'0\',
                 PRIMARY KEY (`flp_id`),
                 INDEX `idx_order_id` (`order_id`)
+            )'      );
+		}
+      $query = tep_db_query('SHOW TABLES LIKE "sew_order_confirm"');
+      if (tep_db_num_rows($query) < 1) {
+          tep_db_query(
+            'CREATE TABLE `sew_order_confirm` (
+                `confirm_id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `confirm_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `session_id` CHAR(128) NULL DEFAULT NULL,
+                `payment_method` CHAR(64) NULL DEFAULT NULL,
+                `order_id` INT(11) NOT NULL DEFAULT \'0\',
+                `order_total` DECIMAL(12,2) NOT NULL DEFAULT \'0\',
+                `ip_address` VARCHAR(15) NULL DEFAULT NULL,
+                `device_checksum` VARCHAR(64) NULL DEFAULT NULL,
+                `country_match` TINYINT(1) NOT NULL DEFAULT 0, /* 0 - Not supported, 1 - Not checked, 2 - Matched, 4 - Not matched, 8 - Partially matched */
+                `cardholder` VARCHAR(255) NULL DEFAULT NULL,
+                `name_mismatch` TINYINT(1) NOT NULL DEFAULT 0, /* 0: same, 1: different unchecked, 2: different checked alias, 3: different checked different */
+                `customer_id` INT(11) NOT NULL DEFAULT \'0\',
+                `flp_id` INT(10) UNSIGNED NOT NULL DEFAULT \'0\',
+                PRIMARY KEY (`confirm_id`),
+                INDEX `idx_order_id` (`order_id`),
+                INDEX `idx_customer_id` (`customer_id`),
+                INDEX `idx_device_checksum` (`device_checksum`),
+                INDEX `idx_flp_id` (`flp_id`)
             )'      );
 		}
     }
